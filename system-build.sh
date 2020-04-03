@@ -269,7 +269,11 @@ for T in $LLVM_TOOLS; do
 done
 
 mkdir -p $LLVM_PREFIX/lib
-ln -sf $(dirname $(which clang))/../lib/clang/ $LLVM_PREFIX/lib/
+CLANG_LIBS=$("$LLVM_CONFIG" --libdir)/clang/
+if [ ! -d "$CLANG_LIBS" ]; then
+    exitmsg "Invalid path to clang libraries."
+fi
+ln -sf "$CLANG_LIBS" "$LLVM_PREFIX/lib/"
 
 ######################################################################
 #   dg
