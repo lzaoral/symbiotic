@@ -1,52 +1,96 @@
 language: cpp
-sudo: true
-
-dist: xenial
+os: linux
+dist: bionic
 
 git:
   depth: 1
 
-env:
-  - LLVM=8
-  - LLVM=9
+# benchexec
+python: 3.8
 
-addons:
-  apt:
+addons: &apt_bionic
+  apt:  &apt_xenial
     sources:
-      # newer gcc and clang?
-      - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-9 main'
-        key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-      - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main'
-        key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-      - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial main'
-        key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
       - ubuntu-toolchain-r-test
-      - sourceline: 'deb https://apt.kitware.com/ubuntu/ xenial main'
+      - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main'
+        key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+      - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
+        key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+      - sourceline: 'deb https://apt.kitware.com/ubuntu/ bionic main'
         key_url: 'https://apt.kitware.com/keys/kitware-archive-latest.asc'
     packages:
+      - cmake
       - libc6-dev-i386
       - linux-libc-dev
       - libz-dev
-      - cmake
       - libz3-dev
       - python3-pip
       - python3-setuptools
+      - python3-wheel
+    update: true
 
-compiler:
-  - clang
+env:
+  - LLVM=5.0
+  - LLVM=6.0
+  - LLVM=7
+  - LLVM=8
+  - LLVM=9
+  - LLVM=10
+
+jobs:
+  include:
+    # GCC 6 + LLVM 10
+    - &gcc
+      addons:
+        <<: *apt_bionic
+      env:
+        - GCC=6
+        - LLVM=10
+      install:
+        - sudo apt install g++-${GCC} clang-${LLVM} llvm-${LLVM}-dev
+        - export CC=gcc-${GCC} CXX=g++-${GCC}
+        - export LLVM_CONFIG=$(which llvm-config-${LLVM})
+
+    # GCC 7 + LLVM 10
+    - <<: *gcc
+      env:
+        - GCC=7
+        - LLVM=10
+
+    # GCC 8 + LLVM 10
+    - <<: *gcc
+      env:
+        - GCC=8
+        - LLVM=10
+
+    # GCC 9 + LLVM 10
+    - <<: *gcc
+      env:
+        - GCC=9
+        - LLVM=10
+
+    # GCC 10 + LLVM 10
+    - <<: *gcc
+      env:
+        - GCC=10
+        - LLVM=10
+
+install:
+  - sudo apt install clang-${LLVM} llvm-${LLVM}-dev
+  - export CC=clang-${LLVM} CXX=clang++-${LLVM}
+  - export LLVM_CONFIG=$(which llvm-config-${LLVM})
+
+before_script:
+  - $CC --version
+  - $CXX --version
+  - $LLVM_CONFIG --version
 
 script:
-  - git clone --depth 1 https://github.com/tomsik68/travis-llvm.git
-  - cd travis-llvm
-  - chmod +x travis-llvm.sh
-  - ./travis-llvm.sh ${LLVM}
-  - cd ..
+  - set -e  # Travis continues even if a subcommand fails...
   - sudo ln -s /usr/include/asm-generic /usr/include/asm
-  - ./system-build.sh -j8
-  - pip3 install --user --upgrade pip
-  - pip3 install --user --ignore-installed PyYAML
-  - pip3 install --user benchexec
-  - PATH=$PATH:/home/travis/.local/bin
+  - ./system-build.sh llvm-config=${LLVM_CONFIG} -j$(nproc)
+  - pip3 install --user benchexec coloredlogs
+  - PATH=$PATH:$HOME/.local/bin
   - cd tests/
   - sudo chmod o+wt '/sys/fs/cgroup/cpuset/'
   - sudo chmod o+wt '/sys/fs/cgroup/cpu,cpuacct/user.slice'
@@ -55,4 +99,4 @@ script:
   - make
 
 notifications:
-    email: false
+  email: false
