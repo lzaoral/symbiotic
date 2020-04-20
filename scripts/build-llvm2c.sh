@@ -15,7 +15,7 @@ if [ ! -d CMakeFiles ]; then
 		-DCMAKE_INSTALL_FULL_DATADIR:PATH=$LLVM_PREFIX/share \
 		-DLLVM_SRC_PATH="$LLVM_SRC_PATH" \
 		-DLLVM_BUILD_PATH="$LLVM_BUILD_PATH" \
-		-DLLVM_DIR=$LLVM_DIR \
+		-DLLVM_DIR="$("$LLVM_CONFIG" --cmakedir)" \
 		-DCMAKE_INSTALL_PREFIX=$LLVM_PREFIX \
 		|| clean_and_exit 1 "git"
 fi
