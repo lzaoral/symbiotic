@@ -250,28 +250,21 @@ LLVM_BIN_DIR=$("$LLVM_CONFIG" --bindir)
 
 mkdir -p $LLVM_PREFIX/bin
 for T in $LLVM_TOOLS; do
-	TOOL="$LLVM_BIN_DIR/$T"
-	if [ ! -x "${TOOL}" ]; then
-		exitmsg "Cannot find working $T binary".
-	fi
-
-	TOOL_VERSION=$("$TOOL" --version)
-	if [[ ! "$TOOL_VERSION" =~ "$LLVM_VERSION" ]]; then
-		exitmsg "$T has wrong version. Expected: $LLVM_VERSION Found: $TOOL_VERSION"
-	fi
+	check_llvm_tool "$LLVM_BIN_DIR/$T"
 
 	# copy the binaries only with full-archive option
 	if [ "$FULL_ARCHIVE" = "no" ] ; then
-		ln -fs "${TOOL}" "${LLVM_PREFIX}/bin"
-	else
-		cp -rf "${TOOL}" "${LLVM_PREFIX}/bin"
+		ln -fs "$LLVM_BIN_DIR/$T" "$LLVM_PREFIX/bin"
+		continue
 	fi
+
+	cp -L "$LLVM_BIN_DIR/$T" "$LLVM_PREFIX/bin"
 done
 
 mkdir -p $LLVM_PREFIX/lib
 CLANG_LIBS=$("$LLVM_CONFIG" --libdir)/clang/
 if [ ! -d "$CLANG_LIBS" ]; then
-    exitmsg "Invalid path to clang libraries."
+	exitmsg "Invalid path to clang libraries."
 fi
 ln -sf "$CLANG_LIBS" "$LLVM_PREFIX/lib/"
 
