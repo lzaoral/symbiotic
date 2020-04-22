@@ -24,9 +24,14 @@ addons: &apt_bionic
       - linux-libc-dev
       - libz-dev
       - libz3-dev
+
+      # benchexec
       - python3-pip
       - python3-setuptools
       - python3-wheel
+
+      # predator
+      - libboost-all-dev
     update: true
 
 # LLVm 3.8 is broken in Xenial and it is not available in Bionic
