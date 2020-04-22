@@ -60,7 +60,7 @@ build()
 check_llvm_tool()
 {
 	TOOL_PATH="$1"
-	TOOL_NAME="$(dirname "$1")"
+	TOOL_NAME="$(basename "$1")"
 	if [ ! -x "$TOOL_PATH" ]; then
 		exitmsg "Cannot find working $TOOL_NAME binary".
 	fi

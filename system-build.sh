@@ -239,13 +239,6 @@ export LLVM_PREFIX="$PREFIX/llvm-$LLVM_VERSION"
 LLVM_MAJOR_VERSION="${LLVM_VERSION%%\.*}"
 LLVM_MINOR_VERSION=${LLVM_VERSION#*\.}
 LLVM_MINOR_VERSION="${LLVM_MINOR_VERSION%\.*}"
-LLVM_CMAKE_CONFIG_DIR=share/llvm/cmake
-if [ $LLVM_MAJOR_VERSION -gt 3 ]; then
-	LLVM_CMAKE_CONFIG_DIR=lib/cmake/llvm
-elif [ $LLVM_MAJOR_VERSION -ge 3 -a $LLVM_MINOR_VERSION -ge 9 ]; then
-	LLVM_CMAKE_CONFIG_DIR=lib/cmake/llvm
-fi
-
 LLVM_BIN_DIR=$("$LLVM_CONFIG" --bindir)
 
 mkdir -p $LLVM_PREFIX/bin
@@ -350,7 +343,9 @@ if [ $FROM -le 6 -a "$BUILD_PREDATOR" = "yes" ]; then
 	pushd predator-${LLVM_VERSION}
 
 	if [ ! -d CMakeFiles ]; then
-	        CXX=clang++ ./switch-host-llvm.sh /usr/${LLVM_CMAKE_CONFIG_DIR}
+		check_llvm_tool "$LLVM_BIN_DIR/clang++"
+		CXX="$LLVM_BIN_DIR/clang++" ./switch-host-llvm.sh \
+			"$("$LLVM_CONFIG" --cmakedir)"
 	fi
 
        	build || exit 1
