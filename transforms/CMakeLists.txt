@@ -59,7 +59,7 @@ message(STATUS "CMAKE_INSTALL_INCLUDEDIR: \"${CMAKE_INSTALL_INCLUDEDIR}\"")
 
 # Use clang-tidy with Debug builds
 if (NOT CMAKE_BUILD_TYPE STREQUAL "Release")
-  find_program(CLANG_TIDY_BIN NAMES clang-tidy)
+  find_program(CLANG_TIDY_BIN NAMES clang-tidy HINTS ${LLVM_TOOLS_BINARY_DIR})
   if (NOT CLANG_TIDY_BIN)
     message(WARNING "Clang-tidy binary has not been found.")
   else()
