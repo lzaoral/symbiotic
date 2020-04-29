@@ -75,6 +75,16 @@ jobs:
         - GCC=10
         - LLVM=10
 
+    - name: clang-tidy/debug
+      addons:
+        <<: *apt_bionic
+      env:
+        - LLVM=10
+      script:
+        - set -e  # Travis continues even if a subcommand fails...
+        - sudo ln -s /usr/include/asm-generic /usr/include/asm
+        - ./system-build.sh build-type=Debug llvm-config=${LLVM_CONFIG} -j$(nproc)
+
 install:
   - sudo apt install clang-${LLVM} llvm-${LLVM}-dev
   - export CC=clang-${LLVM} CXX=clang++-${LLVM}
