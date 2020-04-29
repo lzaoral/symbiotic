@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.6)
 project(sbt-transforms)
 
 find_package(LLVM REQUIRED CONFIG)
@@ -56,6 +56,21 @@ endif(LLVM_BUILD_PATH)
 include(GNUInstallDirs)
 message(STATUS "CMAKE_INSTALL_LIBDIR: \"${CMAKE_INSTALL_LIBDIR}\"")
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR: \"${CMAKE_INSTALL_INCLUDEDIR}\"")
+
+# Use clang-tidy with Debug builds
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+  find_program(CLANG_TIDY_BIN NAMES clang-tidy)
+  if (NOT CLANG_TIDY_BIN)
+    message(WARNING "Clang-tidy binary has not been found.")
+  else()
+    # Empty '--config=' means that the '.clang-tidy' from closest parent
+    # directory will be used.
+    message(STATUS "Using clang-tidy: ${CLANG_TIDY_BIN}")
+    set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_BIN} --config= --warnings-as-errors=*)
+  endif()
+else()
+  set(CMAKE_CXX_CLANG_TIDY "")
+endif()
 
 # We need all the symbols with dynamic libs. With static libs, we get errors.
 if (BUILD_SHARED_LIBS)
