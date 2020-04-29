@@ -81,7 +81,7 @@ jobs:
       env:
         - LLVM=10
       install:
-        - sudo apt install clang-tools-${LLVM} clang-${LLVM} llvm-${LLVM}-dev
+        - sudo apt install clang-tidy-${LLVM} clang-${LLVM} llvm-${LLVM}-dev
         - export CC=clang-${LLVM} CXX=clang++-${LLVM}
         - export LLVM_CONFIG=$(which llvm-config-${LLVM})
       script:
