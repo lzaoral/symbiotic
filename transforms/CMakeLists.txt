@@ -63,10 +63,10 @@ if (NOT CMAKE_BUILD_TYPE STREQUAL "Release")
   if (NOT CLANG_TIDY_BIN)
     message(WARNING "Clang-tidy binary has not been found.")
   else()
-    # Empty '--config=' means that the '.clang-tidy' from closest parent
+    # Empty '--config=' means that the '.clang-tidy' in the closest parent
     # directory will be used.
     message(STATUS "Using clang-tidy: ${CLANG_TIDY_BIN}")
-    set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_BIN} --config= --warnings-as-errors=*)
+    set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_BIN} --config=)
   endif()
 else()
   set(CMAKE_CXX_CLANG_TIDY "")
