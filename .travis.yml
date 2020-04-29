@@ -80,12 +80,15 @@ jobs:
         <<: *apt_bionic
       env:
         - LLVM=10
+      install:
+        - sudo apt install clang-tools-${LLVM}
+        <<: *install_llvm
       script:
         - set -e  # Travis continues even if a subcommand fails...
         - sudo ln -s /usr/include/asm-generic /usr/include/asm
         - ./system-build.sh build-type=Debug llvm-config=${LLVM_CONFIG} -j$(nproc)
 
-install:
+install: &install_llvm
   - sudo apt install clang-${LLVM} llvm-${LLVM}-dev
   - export CC=clang-${LLVM} CXX=clang++-${LLVM}
   - export LLVM_CONFIG=$(which llvm-config-${LLVM})
