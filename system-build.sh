@@ -244,21 +244,34 @@ LLVM_BIN_DIR=$("$LLVM_CONFIG" --bindir)
 LLVM_LIB_DIR=$("$LLVM_CONFIG" --libdir)
 
 # LLVM 4.0+ -> llvm-config --cmakedir
-# LLVM 3.8+ -> libdir/cmake/llvm
-# older     -> prefix/share/llvm/cmake
+# LLVM 3.9  -> libdir/cmake/llvm
+# older     -> prefix/share/llvm/cmake or /usr/share/llvm-x.y/llvm/cmake
 LLVM_CMAKE_DIR=$("$LLVM_CONFIG" --cmakedir 2> /dev/null || true)
 if [ -z "$LLVM_CMAKE_DIR" ]; then
-	if [ "$LLVM_MAJOR_VERSION" -eq 3 -a "$LLVM_MINOR_VERSION" -ge 8 ]; then
+	# LLVM 3.9 should work everywhere
+	if [ "$LLVM_MAJOR_VERSION" -eq 3 -a "$LLVM_MINOR_VERSION" -eq 9 ]; then
 		LLVM_CMAKE_DIR="$LLVM_LIB_DIR/cmake/llvm"
 	else
+		echo "Found llvm-config does not provide '--cmakedir' option."
+		echo "Trying defaults:"
+
+		# default for build from git
 		LLVM_CMAKE_DIR="$("$LLVM_CONFIG" --prefix)/share/llvm/cmake"
+		if [ ! -f "$LLVM_CMAKE_DIR/LLVMConfig.cmake" ]; then
+			# default on ubuntu, may fail on other distros
+			LLVM_CMAKE_DIR="/usr/share/llvm-$LLVM_MAJOR_VERSION.$LLVM_MINOR_VERSION/cmake"
+		fi
+
 	fi
 
 	if [ ! -f "$LLVM_CMAKE_DIR/LLVMConfig.cmake" ]; then
 		exitmsg "Cannot find LLVMConfig.cmake file in the directory $LLVM_CMAKE_DIR"
 	fi
-fi
 
+	if ! grep "$LLVM_VERSION" "$LLVM_CMAKE_DIR/LLVMConfigVersion.cmake" ; then
+		exitmsg "Found LLVMConfig.cmake version does not match."
+	fi
+fi
 
 mkdir -p "$LLVM_PREFIX/bin"
 for T in $LLVM_TOOLS; do
