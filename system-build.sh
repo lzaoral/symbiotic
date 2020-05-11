@@ -239,9 +239,28 @@ export LLVM_PREFIX="$PREFIX/llvm-$LLVM_VERSION"
 LLVM_MAJOR_VERSION="${LLVM_VERSION%%\.*}"
 LLVM_MINOR_VERSION=${LLVM_VERSION#*\.}
 LLVM_MINOR_VERSION="${LLVM_MINOR_VERSION%\.*}"
-LLVM_BIN_DIR=$("$LLVM_CONFIG" --bindir)
 
-mkdir -p $LLVM_PREFIX/bin
+LLVM_BIN_DIR=$("$LLVM_CONFIG" --bindir)
+LLVM_LIB_DIR=$("$LLVM_CONFIG" --libdir)
+
+# LLVM 4.0+ -> llvm-config --cmakedir
+# LLVM 3.8+ -> libdir/cmake/llvm
+# older     -> prefix/share/llvm/cmake
+LLVM_CMAKE_DIR=$("$LLVM_CONFIG" --cmakedir 2> /dev/null || true)
+if [ -z "$LLVM_CMAKE_DIR" ]; then
+	if [ "$LLVM_MAJOR_VERSION" -eq 3 -a "$LLVM_MINOR_VERSION" -ge 8 ]; then
+		LLVM_CMAKE_DIR="$LLVM_LIB_DIR/cmake/llvm"
+	else
+		LLVM_CMAKE_DIR="$("$LLVM_CONFIG" --prefix)/share/llvm/cmake"
+	fi
+
+	if [ ! -f "$LLVM_CMAKE_DIR/LLVMConfig.cmake" ]; then
+		exitmsg "Cannot find LLVMConfig.cmake file in the directory $LLVM_CMAKE_DIR"
+	fi
+fi
+
+
+mkdir -p "$LLVM_PREFIX/bin"
 for T in $LLVM_TOOLS; do
 	check_llvm_tool "$LLVM_BIN_DIR/$T"
 
@@ -254,12 +273,12 @@ for T in $LLVM_TOOLS; do
 	cp -L "$LLVM_BIN_DIR/$T" "$LLVM_PREFIX/bin"
 done
 
-mkdir -p $LLVM_PREFIX/lib
-CLANG_LIBS=$("$LLVM_CONFIG" --libdir)/clang/
-if [ ! -d "$CLANG_LIBS" ]; then
+mkdir -p "$LLVM_PREFIX/lib"
+CLANG_LIB_DIR="$LLVM_LIB_DIR/clang"
+if [ ! -d "$CLANG_LIB_DIR" ]; then
 	exitmsg "Invalid path to clang libraries."
 fi
-ln -sf "$CLANG_LIBS" "$LLVM_PREFIX/lib/"
+ln -sf "$CLANG_LIB_DIR" "$LLVM_PREFIX/lib/"
 
 ######################################################################
 #   dg
@@ -280,7 +299,7 @@ if [ $FROM -le 1 ]; then
 			-DCMAKE_INSTALL_LIBDIR:PATH=lib \
 			-DCMAKE_INSTALL_PREFIX=$LLVM_PREFIX \
 			-DCMAKE_INSTALL_RPATH='$ORIGIN/../lib' \
-			-DLLVM_DIR=$($LLVM_CONFIG --cmakedir) \
+			-DLLVM_DIR="$LLVM_CMAKE_DIR" \
 			|| clean_and_exit 1 "git"
 	fi
 
@@ -301,7 +320,7 @@ if [ $FROM -le 1 ]; then
 			-DCMAKE_BUILD_TYPE=${BUILD_TYPE}\
 			-DCMAKE_INSTALL_LIBDIR:PATH=lib \
 			-DCMAKE_INSTALL_FULL_DATADIR:PATH=$LLVM_PREFIX/share \
-			-DLLVM_DIR=$($LLVM_CONFIG --cmakedir) \
+			-DLLVM_DIR="$LLVM_CMAKE_DIR" \
 			-DDG_PATH=$ABS_SRCDIR/dg \
 			-DCMAKE_INSTALL_PREFIX=$LLVM_PREFIX \
 			-DCMAKE_INSTALL_RPATH='$ORIGIN/../lib' \
@@ -345,7 +364,7 @@ if [ $FROM -le 6 -a "$BUILD_PREDATOR" = "yes" ]; then
 	if [ ! -d CMakeFiles ]; then
 		check_llvm_tool "$LLVM_BIN_DIR/clang++"
 		CXX="$LLVM_BIN_DIR/clang++" ./switch-host-llvm.sh \
-			"$("$LLVM_CONFIG" --cmakedir)"
+			"$LLVM_CMAKE_DIR"
 	fi
 
        	build || exit 1
@@ -388,7 +407,7 @@ if [ $FROM -le 6 ]; then
 			-DCMAKE_INSTALL_LIBDIR:PATH=lib \
 			-DCMAKE_INSTALL_FULL_DATADIR:PATH=$LLVM_PREFIX/share \
 			-DDG_PATH=$ABS_SRCDIR/dg \
-			-DLLVM_DIR=$($LLVM_CONFIG --cmakedir) \
+			-DLLVM_DIR="$LLVM_CMAKE_DIR" \
 			-DCMAKE_INSTALL_PREFIX=$LLVM_PREFIX \
 			|| clean_and_exit 1 "git"
 	fi
@@ -424,7 +443,7 @@ if [ $FROM -le 6 ]; then
 			-DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
 			-DCMAKE_INSTALL_PREFIX=$PREFIX \
 			-DCMAKE_INSTALL_LIBDIR:PATH=$LLVM_PREFIX/lib \
-			-DLLVM_DIR=$($LLVM_CONFIG --cmakedir) \
+			-DLLVM_DIR="$LLVM_CMAKE_DIR" \
 			|| clean_and_exit 1
 	fi
 
