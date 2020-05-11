@@ -39,6 +39,28 @@ env:
 
 jobs:
   include:
+    # LLVM 3.8
+    - &xenial
+      dist: xenial
+      addons:
+        apt:
+          <<: *apt_xenial
+          sources:
+            - ubuntu-toolchain-r-test
+            - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+            - sourceline: 'deb https://apt.kitware.com/ubuntu/ xenial main'
+              key_url: 'https://apt.kitware.com/keys/kitware-archive-latest.asc'
+      env: LLVM=4.0
+
+    # LLVM 3.9
+    - <<: *xenial
+      env: LLVM=3.9
+
+    # LLVM 4.0
+    - <<: *xenial
+      env: LLVM=4.0
+
     # GCC 6 + LLVM 10
     - &gcc
       addons:
