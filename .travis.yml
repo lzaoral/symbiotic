@@ -29,7 +29,11 @@ addons: &apt_bionic
       - python3-wheel
     update: true
 
+# LLVm 3.8 is broken in Xenial and it is not available in Bionic
 env:
+  - LLVM=3.7
+  - LLVM=3.9
+  - LLVM=4.0
   - LLVM=5.0
   - LLVM=6.0
   - LLVM=7
@@ -39,27 +43,6 @@ env:
 
 jobs:
   include:
-    # LLVM 3.8
-    - &xenial
-      dist: xenial
-      addons:
-        apt:
-          <<: *apt_xenial
-          sources:
-            - ubuntu-toolchain-r-test
-            - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial main'
-              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-            - sourceline: 'deb https://apt.kitware.com/ubuntu/ xenial main'
-              key_url: 'https://apt.kitware.com/keys/kitware-archive-latest.asc'
-      env: LLVM=3.8
-
-    # LLVM 3.9
-    - <<: *xenial
-      env: LLVM=3.9
-
-    # LLVM 4.0
-    - <<: *xenial
-      env: LLVM=4.0
 
     # GCC 6 + LLVM 10
     - &gcc
@@ -95,6 +78,22 @@ jobs:
     - <<: *gcc
       env:
         - GCC=10
+        - LLVM=10
+
+    # GCC 5 + LLVM 10
+    - <<: *gcc
+      dist: xenial
+      addons:
+        apt:
+          <<: *apt_xenial
+          sources:
+            - ubuntu-toolchain-r-test
+            - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+            - sourceline: 'deb https://apt.kitware.com/ubuntu/ xenial main'
+              key_url: 'https://apt.kitware.com/keys/kitware-archive-latest.asc'
+      env:
+        - GCC=5
         - LLVM=10
 
     - name: clang-tidy/debug
